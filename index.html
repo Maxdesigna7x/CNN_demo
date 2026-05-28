@@ -1,0 +1,2418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>De Texto a Acción: La Evolución de los LLMs</title>
+  <meta name="description" content="Presentación interactiva sobre cómo los LLMs pasan de predecir texto a ejecutar acciones controladas en sistemas agenticos.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* VARIABLES & CORE DESIGN SYSTEM (LIGHT & DARK MODES) */
+    :root {
+      /* Dark Theme (Default) - Ultra modern deep slate */
+      --bg-dark: #07090e;
+      --bg-card: #0f131f;
+      --bg-card-secondary: rgba(255, 255, 255, 0.04);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-white: #ffffff;
+      
+      /* Indigo/Purple Accent Color theme */
+      --primary: #6366f1; 
+      --primary-glow: rgba(99, 102, 241, 0.10);
+      --accent-cyan-glow: rgba(6, 182, 212, 0.10);
+      --accent-green-glow: rgba(16, 185, 129, 0.10);
+      --accent-red-glow: rgba(239, 68, 68, 0.10);
+      --accent-purple: #a855f7;
+      --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    body.light-mode {
+      /* Light Theme - Premium & Harmonious */
+      --bg-dark: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-card-secondary: #f1f5f9; 
+      --border-color: rgba(0, 0, 0, 0.06);
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --text-white: #0f172a;
+      --primary-glow: rgba(79, 70, 229, 0.08);
+      --accent-cyan-glow: rgba(8, 145, 178, 0.08);
+      --accent-green-glow: rgba(5, 150, 105, 0.08);
+      --accent-red-glow: rgba(220, 38, 38, 0.08);
+    }
+
+    /* Anthropic Palette Override (Warm Naranja & Crimson) */
+    body.anthropic-theme {
+      --primary: #d97706; /* Terracotta Orange */
+      --primary-glow: rgba(217, 119, 6, 0.18);
+      --accent-cyan: #e11d48;
+      --accent-cyan-glow: rgba(225, 29, 72, 0.18);
+      --accent-purple: #c2410c;
+    }
+
+    body.anthropic-theme.light-mode {
+      --primary: #b45309;
+      --primary-glow: rgba(180, 83, 9, 0.08);
+      --accent-cyan: #be123c;
+      --accent-cyan-glow: rgba(190, 18, 60, 0.08);
+      --accent-purple: #9a3412;
+    }
+
+    /* STRICT VIEWPORT RESET */
+    html, body {
+      height: 100vh;
+      width: 100vw;
+      margin: 0;
+      padding: 0;
+      overflow: hidden; /* Absolutely prevents scrollbar and layout displacement */
+      box-sizing: border-box;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* GRID LAYOUT FOR MATHEMATICAL 100% CONTAINER HEIGHT FIT */
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      display: grid;
+      grid-template-rows: 80px 1fr 80px; /* Rigorously separates Header, Workspace & Footer */
+      position: relative;
+      transition: background-color 0.4s ease, color 0.4s ease;
+    }
+
+    /* BACKGROUND GLOW CONTAINER - Trapped safely across all rows to prevent cutting */
+    .bg-glow-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      pointer-events: none;
+      grid-row: 1 / span 3; /* Spans across all Grid rows, completely avoiding cutoffs */
+      grid-column: 1;
+      overflow: hidden;
+    }
+
+    .bg-glow-1 {
+      position: absolute;
+      top: -20%;
+      left: -20%;
+      width: 80vw;
+      height: 80vh;
+      background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+      pointer-events: none;
+      filter: blur(100px);
+    }
+
+    .bg-glow-2 {
+      position: absolute;
+      bottom: -20%;
+      right: -20%;
+      width: 80vw;
+      height: 80vh;
+      background: radial-gradient(circle, var(--accent-cyan-glow) 0%, transparent 70%);
+      pointer-events: none;
+      filter: blur(100px);
+    }
+
+    /* HEADER */
+    header {
+      padding: 0 4rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      border-bottom: 1px solid var(--border-color);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 800;
+      font-size: 1.5rem;
+      letter-spacing: 0.5px;
+    }
+
+    .brand span {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--primary), var(--accent-cyan));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .theme-toggle-btn, .color-toggle-btn {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.65rem;
+      border-radius: 99px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: var(--transition-smooth);
+      font-size: 1.1rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      width: 44px;
+      height: 44px;
+    }
+
+    .theme-toggle-btn:hover, .color-toggle-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--primary);
+      box-shadow: 0 4px 15px var(--primary-glow);
+    }
+
+    /* WORKSPACE */
+    main {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem 4rem;
+      z-index: 5;
+      overflow: hidden;
+    }
+
+    /* COMPACTED & SECURE SLIDE WRAPPER */
+    .slide {
+      position: absolute;
+      width: 95%;
+      max-width: 1350px;
+      height: 95%;
+      max-height: 580px; /* Secure maximum vertical height to prevent viewport spills */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      transform: translateY(10px) scale(0.99);
+      z-index: 1;
+      box-sizing: border-box;
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0) scale(1);
+      z-index: 2;
+    }
+
+    /* TYPOGRAPHY */
+    .slide-number {
+      font-family: 'Fira Code', monospace;
+      color: var(--accent-cyan);
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .slide-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 1.25rem;
+      background: linear-gradient(to right, var(--text-main), var(--text-muted));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* GRID SYSTEM */
+    .slide-content-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1.3fr;
+      gap: 4rem;
+      align-items: center;
+      flex: 1;
+    }
+
+    .slide-text-section {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .slide-lead-para {
+      font-size: 1.3rem;
+      line-height: 1.6;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+
+    .slide-lead-para strong {
+      color: var(--text-main);
+    }
+
+    .key-points-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .key-points-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .key-points-list li::before {
+      content: "→";
+      color: var(--primary);
+      font-weight: bold;
+      font-size: 1.25rem;
+    }
+
+    /* TERMINALS & CARDS */
+    .code-terminal {
+      background-color: var(--bg-card);
+      border: 1.5px solid var(--border-color);
+      border-radius: 16px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.95rem;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .terminal-header {
+      background-color: rgba(0,0,0,0.15);
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .terminal-dots {
+      display: flex;
+      gap: 0.45rem;
+    }
+
+    .terminal-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .terminal-dot:nth-child(1) { background-color: #ef4444; }
+    .terminal-dot:nth-child(2) { background-color: #f59e0b; }
+    .terminal-dot:nth-child(3) { background-color: #10b981; }
+
+    .terminal-tab {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .terminal-content {
+      padding: 1.25rem;
+      overflow: hidden;
+      line-height: 1.5;
+      color: #9cdcfe;
+    }
+
+    /* PORTADA (SLIDE 1) */
+    .slide-portada {
+      text-align: center;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .portada-badge {
+      background: var(--primary-glow);
+      color: var(--primary);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      padding: 0.6rem 1.5rem;
+      border-radius: 99px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 15px var(--primary-glow);
+    }
+
+    .portada-title {
+      font-size: 4.8rem;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, var(--text-main) 30%, var(--accent-purple), var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -1.5px;
+    }
+
+    .portada-subtitle {
+      font-size: 1.5rem;
+      color: var(--text-muted);
+      max-width: 850px;
+      margin: 0 auto 3rem auto;
+      line-height: 1.6;
+    }
+
+    .portada-graphic {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3rem;
+      width: 100%;
+    }
+
+    .portada-node {
+      background-color: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: 20px;
+      padding: 1.25rem 2.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      min-width: 200px;
+    }
+
+    .portada-node.active {
+      border-color: var(--primary);
+      box-shadow: 0 0 35px var(--primary-glow);
+    }
+
+    .portada-node.faded {
+      opacity: 0.3;
+      filter: blur(1.5px);
+    }
+
+    .portada-arrow {
+      color: var(--text-muted);
+      font-size: 3rem;
+      animation: pulseArrow 2s infinite;
+    }
+
+    /* PREGUNTA (SLIDE 2) */
+    .slide-question {
+      text-align: center;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .question-big {
+      font-size: 4.2rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 1.5rem;
+    }
+
+    .question-word-cloud {
+      position: relative;
+      height: 250px;
+      width: 90%;
+      max-width: 900px;
+      margin: 1.5rem auto;
+    }
+
+    .cloud-tag {
+      position: absolute;
+      padding: 0.65rem 1.5rem;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-card);
+      font-family: 'Fira Code', monospace;
+      color: var(--text-muted);
+      font-size: 1.05rem;
+    }
+
+    .cloud-tag.center {
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--primary);
+      border-color: var(--primary);
+      background-color: var(--primary-glow);
+      box-shadow: 0 0 35px var(--primary-glow);
+      z-index: 10;
+    }
+
+    /* NEXT TOKEN (SLIDE 3) */
+    .token-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      background-color: var(--bg-card);
+      border: 1.5px solid var(--border-color);
+      padding: 2rem;
+      border-radius: 20px;
+      width: 100%;
+    }
+
+    .token-box {
+      font-family: 'Fira Code', monospace;
+      background-color: var(--bg-card-secondary);
+      padding: 1.1rem 1.5rem;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      font-size: 1.25rem;
+    }
+
+    .token-predictions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .pred-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.65rem 1.1rem;
+      border-radius: 10px;
+      background-color: var(--bg-card-secondary);
+      border-left: 4px solid transparent;
+      font-family: 'Fira Code', monospace;
+      font-size: 1.15rem;
+    }
+
+    .pred-row.winner {
+      background-color: var(--accent-cyan-glow);
+      border-left-color: var(--accent-cyan);
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    .pred-bar {
+      height: 8px;
+      background-color: var(--border-color);
+      border-radius: 4px;
+      flex: 1;
+      margin: 0 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pred-bar-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background-color: var(--accent-cyan);
+    }
+
+    /* RAW OUTPUT (SLIDE 4) */
+    .raw-output-container {
+      background-color: var(--bg-card);
+      border: 1.5px solid var(--border-color);
+      border-radius: 20px;
+      padding: 2rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 1.15rem;
+      color: var(--text-main);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .raw-prompt {
+      color: var(--text-muted);
+      border-bottom: 1.5px solid var(--border-color);
+      padding-bottom: 0.85rem;
+    }
+
+    .raw-response {
+      flex: 1;
+      white-space: pre-wrap;
+      position: relative;
+      line-height: 1.6;
+    }
+
+    .typing-cursor {
+      display: inline-block;
+      width: 10px;
+      height: 22px;
+      background-color: var(--primary);
+      animation: blink 1s step-end infinite;
+      margin-left: 3px;
+      vertical-align: middle;
+    }
+
+    /* BASE VS CHAT (SLIDE 5) */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      height: 100%;
+      align-items: stretch;
+    }
+
+    .comp-card {
+      background-color: var(--bg-card);
+      border: 1.5px solid var(--border-color);
+      border-radius: 20px;
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      height: 100%;
+    }
+
+    .comp-card.active {
+      border-color: var(--primary);
+      box-shadow: 0 15px 40px var(--primary-glow);
+    }
+
+    .comp-header {
+      font-weight: 800;
+      font-size: 1.35rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .comp-header.base { color: var(--text-muted); }
+    .comp-header.chat { color: var(--primary); }
+
+    .comp-body {
+      flex: 1;
+      font-family: 'Fira Code', monospace;
+      font-size: 1.05rem;
+      background-color: var(--bg-card-secondary);
+      border-radius: 12px;
+      padding: 1.25rem;
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      line-height: 1.6;
+    }
+
+    .comp-pill {
+      background-color: rgba(255, 255, 255, 0.08);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      align-self: flex-start;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    /* CHAT UI (SLIDE 6) */
+    .chat-showcase {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      height: 100%;
+      justify-content: center;
+    }
+
+    .mini-chat-ui {
+      background-color: var(--bg-card);
+      border: 1.5px solid var(--border-color);
+      border-radius: 20px;
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .chat-bubble {
+      max-width: 85%;
+      padding: 0.85rem 1.25rem;
+      border-radius: 16px;
+      font-size: 1.2rem;
+      line-height: 1.5;
+    }
+
+    .chat-bubble.user {
+      background-color: var(--primary);
+      color: #ffffff;
+      align-self: flex-end;
+      border-bottom-right-radius: 2px;
+    }
+
+    .chat-bubble.assistant {
+      background-color: var(--bg-card-secondary);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      align-self: flex-start;
+      border-bottom-left-radius: 2px;
+    }
+
+    /* MULTI-TURN (SLIDE 7) */
+    .stack-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      height: 100%;
+    }
+
+    .stack-layer {
+      width: 100%;
+      max-width: 520px;
+      background-color: var(--bg-card);
+      border: 1.5px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.1rem 1.75rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 1.1rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      position: relative;
+    }
+
+    .stack-layer.system { border-left: 6px solid var(--accent-purple); }
+    .stack-layer.user { border-left: 6px solid var(--primary); }
+    .stack-layer.assistant { border-left: 6px solid var(--accent-cyan); }
+
+    .stack-badge {
+      position: absolute;
+      right: 1.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.85rem;
+      background-color: var(--bg-card-secondary);
+      padding: 0.25rem 0.6rem;
+      border-radius: 5px;
+      color: var(--text-muted);
+    }
+
+    .stack-footer-flow {
+      margin-top: 1.5rem;
+      width: 100%;
+      max-width: 520px;
+      text-align: center;
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+
+    /* LIMITS (SLIDE 8) */
+    .limit-showcase {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      height: 100%;
+      justify-content: center;
+    }
+
+    .limit-card {
+      background-color: var(--bg-card);
+      border: 1.5px solid var(--border-color);
+      border-radius: 20px;
+      padding: 1.75rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 1.25rem;
+    }
+
+    .limit-card.danger {
+      border-left: 6px solid var(--accent-red);
+    }
+
+    .limit-icon {
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .limit-detail h4 {
+      font-weight: 800;
+      font-size: 1.35rem;
+      margin-bottom: 0.35rem;
+      color: var(--text-main);
+    }
+
+    .limit-detail p {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* RAG WITH FLOTANT RELEVANCE SCORES & FULL FINAL RESPONSE (SLIDE 9) */
+    .rag-vertical-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      width: 100%;
+      height: 100%;
+      justify-content: center;
+    }
+
+    .rag-flow-card {
+      background-color: var(--bg-card);
+      border: 1.5px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .rag-flow-card.highlight {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 25px var(--accent-cyan-glow);
+    }
+
+    .rag-flow-header {
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .rag-flow-content {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .rag-flow-chunks-container {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 0.35rem;
+      justify-content: space-between;
+    }
+
+    .rag-chunk-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      flex: 1;
+    }
+
+    .rag-chunk-score {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-family: 'Fira Code', monospace;
+    }
+
+    .rag-chunk-score.highlight {
+      color: var(--accent-green);
+    }
+
+    .rag-chunk {
+      background-color: var(--bg-card-secondary);
+      border: 1.5px solid var(--border-color);
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-family: 'Fira Code', monospace;
+      color: var(--text-main);
+      transition: var(--transition-smooth);
+    }
+
+    .rag-chunk-wrapper.active .rag-chunk {
+      border-color: var(--accent-green);
+      background-color: var(--accent-green-glow);
+      color: var(--text-main);
+      font-weight: 700;
+      box-shadow: 0 4px 15px var(--accent-green-glow);
+    }
+
+    /* RAG COMPARATIVE (SLIDE 10) */
+    .rag-comp-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .rag-comp-box {
+      border: 1.5px solid var(--border-color);
+      border-radius: 20px;
+      background-color: var(--bg-card);
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .rag-comp-box.with-rag {
+      border-color: var(--accent-green);
+      box-shadow: 0 10px 30px var(--accent-green-glow);
+    }
+
+    .rag-comp-box h4 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .rag-comp-text {
+      font-family: 'Fira Code', monospace;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      padding: 1.25rem;
+      background-color: var(--bg-card-secondary);
+      border-radius: 10px;
+      color: var(--text-muted);
+    }
+
+    /* TOOL CALLING (SLIDE 12) */
+    .tool-request-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      height: 100%;
+      justify-content: center;
+    }
+
+    .tool-flow-row {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      background-color: var(--bg-card);
+      border: 1.5px solid var(--border-color);
+      padding: 1.5rem;
+      border-radius: 16px;
+    }
+
+    .tool-flow-row.active {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 25px var(--accent-cyan-glow);
+    }
+
+    .tool-flow-num {
+      width: 36px;
+      height: 36px;
+      background-color: var(--bg-card-secondary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    .tool-flow-row.active .tool-flow-num {
+      background-color: var(--accent-cyan);
+      color: #000000;
+    }
+
+    .tool-flow-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .tool-flow-label {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .tool-flow-val {
+      font-family: 'Fira Code', monospace;
+      font-size: 1.25rem;
+    }
+
+    /* ORCHESTRATOR / SYSTEM FLOW (SLIDE 13) */
+    .sys-cards-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      width: 100%;
+      height: 100%;
+      justify-content: center;
+    }
+
+    .sys-step-card {
+      background-color: var(--bg-card);
+      border: 1.5px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1rem 1.75rem;
+      display: flex;
+      align-items: center;
+      gap: 1.75rem;
+      position: relative;
+    }
+
+    .sys-step-card.active {
+      border-color: var(--primary);
+      box-shadow: 0 0 25px var(--primary-glow);
+    }
+
+    .sys-step-icon {
+      font-size: 2rem;
+    }
+
+    .sys-step-info {
+      flex: 1;
+    }
+
+    .sys-step-info h4 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 0.25rem;
+    }
+
+    .sys-step-info p {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .sys-flow-arrow {
+      position: absolute;
+      bottom: -1.4rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.2rem;
+      color: var(--primary);
+      font-weight: bold;
+    }
+
+    /* ACTION LOOP (SLIDE 14) */
+    .loop-visual {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+
+    .loop-circle {
+      width: 250px;
+      height: 250px;
+      border: 3px dashed var(--primary);
+      border-radius: 50%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: rotateDashed 24s linear infinite;
+    }
+
+    .loop-node {
+      position: absolute;
+      background-color: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.65rem 1.1rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-main); 
+      animation: counterRotateDashed 24s linear infinite;
+    }
+
+    .loop-node.n1 { top: -20px; left: calc(50% - 60px); border-color: var(--primary); }
+    .loop-node.n2 { right: -40px; top: calc(50% - 25px); border-color: var(--accent-cyan); }
+    .loop-node.n3 { bottom: -20px; left: calc(50% - 60px); border-color: var(--accent-green); }
+    .loop-node.n4 { left: -40px; top: calc(50% - 25px); border-color: var(--accent-purple); }
+
+    .loop-center {
+      position: absolute;
+      font-weight: 800;
+      font-size: 1.5rem;
+      color: var(--text-main);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .loop-steps-log {
+      margin-top: 2rem;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .loop-step-badge {
+      background-color: var(--bg-card-secondary);
+      border: 1.5px solid var(--border-color);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: 'Fira Code', monospace;
+      color: var(--text-muted);
+    }
+
+    .loop-step-badge.active {
+      border-color: var(--accent-cyan);
+      background-color: var(--accent-cyan-glow);
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    /* HARNESS EXPLAINER (SLIDE 15) */
+    .harness-super-box {
+      border: 2px solid var(--primary);
+      box-shadow: 0 0 45px var(--primary-glow);
+      border-radius: 24px;
+      background-color: var(--bg-card);
+      padding: 1.75rem 2rem;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .harness-super-header {
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 0.65rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .harness-super-header h3 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .harness-expanded-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      flex: 1;
+      margin-top: 0.65rem;
+    }
+
+    .harness-exp-card {
+      background-color: var(--bg-card-secondary); 
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.95rem 1.15rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      transition: var(--transition-smooth);
+    }
+
+    .harness-exp-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    .harness-exp-card h5 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--accent-cyan);
+    }
+
+    .harness-exp-card p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* ANATOMIA DEL HARNESS (SLIDE 16) */
+    .harness-anatomy-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1.3fr;
+      gap: 2.5rem;
+      align-items: stretch;
+      height: 100%;
+    }
+
+    .anatomy-left-explanation {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      justify-content: center;
+    }
+
+    .anatomy-explain-card {
+      background-color: var(--bg-card);
+      border: 1.5px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.85rem 1.25rem;
+    }
+
+    .anatomy-explain-card h5 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--accent-cyan);
+      margin-bottom: 0.25rem;
+    }
+
+    .anatomy-explain-card p {
+      font-size: 1rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .anatomy-right-flow-terminal {
+      background-color: #0b0f19;
+      border: 2px solid var(--border-color);
+      border-radius: 20px;
+      padding: 1.5rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.9rem;
+      color: #f3f4f6;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      justify-content: space-between;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+    }
+
+    .anatomy-flow-step {
+      border-left: 3px solid var(--primary);
+      padding-left: 1.1rem;
+    }
+
+    .anatomy-flow-step.exec {
+      border-left-color: var(--accent-green);
+    }
+
+    .anatomy-flow-title {
+      font-weight: 800;
+      font-size: 0.85rem;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.25rem;
+    }
+
+    .anatomy-flow-content {
+      color: #9cdcfe;
+    }
+
+    /* PRACTICES (SLIDE 17) */
+    .practices-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      height: auto;
+    }
+
+    .practice-column {
+      background-color: var(--bg-card);
+      border: 1.5px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.1rem 1.5rem; 
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem; 
+    }
+
+    .practice-column.failures { border-top: 6px solid var(--accent-red); }
+    .practice-column.controls { border-top: 6px solid var(--accent-green); }
+
+    .practice-col-header {
+      font-size: 1.3rem; 
+      font-weight: 800;
+    }
+
+    .practice-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem; 
+    }
+
+    .practice-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      padding: 0.5rem 0.75rem; 
+      border-radius: 10px;
+      background-color: var(--bg-card-secondary);
+      line-height: 1.4;
+    }
+
+    .failures .practice-list li::before {
+      content: "✕";
+      color: var(--accent-red);
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    .controls .practice-list li::before {
+      content: "✓";
+      color: var(--accent-green);
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    /* TIMELINE (SLIDE 18) */
+    .timeline-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: 100%;
+      padding: 0 2rem;
+    }
+
+    .timeline-track {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      width: 100%;
+    }
+
+    .timeline-track::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 5px;
+      background: linear-gradient(to right, var(--primary), var(--accent-cyan), var(--accent-green));
+      transform: translateY(-50%);
+      z-index: 1;
+    }
+
+    .timeline-node {
+      background-color: var(--bg-card);
+      border: 3px solid var(--border-color);
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: 800;
+      position: relative;
+      z-index: 5;
+      transition: var(--transition-smooth);
+      cursor: pointer;
+      color: var(--text-main);
+    }
+
+    .timeline-node.active {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 25px var(--accent-cyan-glow);
+      background-color: var(--bg-card);
+      transform: scale(1.25);
+    }
+
+    .timeline-node.active .timeline-label {
+      color: var(--text-main);
+      font-weight: 800;
+    }
+
+    .timeline-label {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.75px;
+      transition: var(--transition-smooth);
+    }
+
+    /* CIERRE (SLIDE 19) */
+    .slide-cierre {
+      text-align: center;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cierre-title {
+      font-size: 3.5rem;
+      font-weight: 800;
+      line-height: 1.3;
+      margin-bottom: 2.5rem;
+      max-width: 1000px;
+      background: linear-gradient(to right, var(--text-main), var(--primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .cierre-sub {
+      font-family: 'Fira Code', monospace;
+      color: var(--accent-cyan);
+      font-size: 1.5rem;
+      border: 1.5px solid rgba(6, 182, 212, 0.2);
+      padding: 0.85rem 1.75rem;
+      border-radius: 12px;
+      background-color: var(--accent-cyan-glow);
+      display: inline-block;
+    }
+
+    /* FOOTER */
+    footer {
+      padding: 0 4rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border-color);
+      backdrop-filter: blur(10px);
+      z-index: 10;
+      position: relative;
+    }
+
+    .footer-center {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .slide-counter {
+      font-family: 'Fira Code', monospace;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .nav-progress-dots {
+      display: flex;
+      gap: 0.45rem;
+    }
+
+    .progress-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--border-color);
+      transition: var(--transition-smooth);
+    }
+
+    .progress-dot.active {
+      background-color: var(--primary);
+      box-shadow: 0 0 10px var(--primary);
+      width: 20px;
+      border-radius: 4px;
+    }
+
+    .progress-dot.completed {
+      background-color: var(--accent-cyan);
+    }
+
+    .slide-controls {
+      display: flex;
+      gap: 1.25rem;
+    }
+
+    .btn-control {
+      background-color: var(--bg-card);
+      border: 1.5px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: var(--transition-smooth);
+    }
+
+    .btn-control:hover:not(:disabled) {
+      border-color: var(--primary);
+      background-color: var(--primary-glow);
+    }
+
+    .btn-control:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    /* RESPONSIVE HEIGHT ADJUSTMENT */
+    @media (max-height: 800px) {
+      .slide-title {
+        font-size: 2.2rem;
+        margin-bottom: 1rem;
+      }
+      .slide-lead-para {
+        font-size: 1.15rem;
+        margin-bottom: 1.25rem;
+      }
+      .key-points-list li {
+        font-size: 1.05rem;
+      }
+      .btn-control {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.95rem;
+      }
+      .harness-exp-card h5 {
+        font-size: 1.05rem;
+      }
+      .harness-exp-card p {
+        font-size: 0.9rem;
+      }
+      .question-big {
+        font-size: 3.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background glow container to prevent Grid layout cutoff bugs -->
+  <div class="bg-glow-container">
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="url(#logoGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M2 17L12 22L22 17" stroke="url(#logoGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M2 12L12 17L22 12" stroke="url(#logoGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <defs>
+          <linearGradient id="logoGrad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#6366f1"/>
+            <stop offset="1" stop-color="#06b6d4"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <span>De Texto a Acción</span>
+    </div>
+    <div class="header-actions">
+      <button class="theme-toggle-btn" id="themeToggleBtn">
+        <span>🌙</span>
+      </button>
+      <button class="color-toggle-btn" id="colorToggleBtn">
+        <span>🎨</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Presentation Workspace -->
+  <main id="presentation-container">
+
+    <!-- 1. PORTADA -->
+    <div class="slide slide-portada active" id="slide-1">
+      <div class="portada-badge">Evolución de Sistemas de IA</div>
+      <h1 class="portada-title">De Texto a Acción</h1>
+      <p class="portada-subtitle">Cómo los modelos que predicen palabras se transforman en sistemas complejos capaces de ejecutar acciones coordinadas en el mundo real.</p>
+      
+      <div class="portada-graphic">
+        <div class="portada-node active">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span style="font-size:1.1rem; font-weight:700;">Predicción Textual</span>
+        </div>
+        <div class="portada-arrow">→</div>
+        <div class="portada-node faded">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          <span style="font-size:1.1rem; font-weight:700;">Harness Agéntico</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. LA PREGUNTA -->
+    <div class="slide slide-question" id="slide-2">
+      <span class="slide-number">02 / La Paradoja</span>
+      <h2 class="question-big">Un LLM sólo predice texto.</h2>
+      <p class="slide-lead-para" style="max-width: 800px; margin: 0 auto 2rem auto;">Entonces... ¿cómo es que termina realizando acciones avanzadas, interactuando con bases de datos, APIs externas y operando herramientas?</p>
+      
+      <div class="question-word-cloud">
+        <div class="cloud-tag center">Predict Next Token</div>
+        <div class="cloud-tag" style="top: 10%; left: 8%;">¿Buscar Datos?</div>
+        <div class="cloud-tag" style="top: 15%; right: 10%;">¿Llamar APIs?</div>
+        <div class="cloud-tag" style="bottom: 20%; left: 15%;">¿Memoria?</div>
+        <div class="cloud-tag" style="bottom: 10%; right: 8%;">¿Ejecución?</div>
+        <div class="cloud-tag" style="top: 75%; left: 3%;">¿Código Autónomo?</div>
+        <div class="cloud-tag" style="top: 3%; right: 40%;">¿Herramientas?</div>
+      </div>
+    </div>
+
+    <!-- 3. NEXT-TOKEN PREDICTION -->
+    <div class="slide" id="slide-3">
+      <div class="slide-content-grid">
+        <div class="slide-text-section">
+          <span class="slide-number">03 / El Origen Técnico</span>
+          <h2 class="slide-title">Next-Token Prediction</h2>
+          <p class="slide-lead-para">En su nivel matemático más puro, un modelo de lenguaje hace una única tarea: <strong>calcular el siguiente token más probable</strong> en base a un texto de entrada.</p>
+          <ul class="key-points-list">
+            <li>No comprende intenciones semánticas ni lógica de negocio.</li>
+            <li>Funciona como un autocompletador predictivo de alta capacidad.</li>
+            <li>Todo comportamiento agéntico complejo surge a partir de este cimiento.</li>
+          </ul>
+        </div>
+        <div class="token-flow">
+          <div class="token-box">
+            Entrada: <span style="color:var(--text-muted)">"El ingrediente principal de la pizza es el"</span>
+          </div>
+          <div class="token-predictions-list">
+            <div class="pred-row winner">
+              <span>"queso"</span>
+              <div class="pred-bar"><div class="pred-bar-fill" style="width: 85%"></div></div>
+              <span>85%</span>
+            </div>
+            <div class="pred-row">
+              <span>"tomate"</span>
+              <div class="pred-bar"><div class="pred-bar-fill" style="width: 8%"></div></div>
+              <span>8%</span>
+            </div>
+            <div class="pred-row">
+              <span>"pan"</span>
+              <div class="pred-bar"><div class="pred-bar-fill" style="width: 3%"></div></div>
+              <span>3%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. RAW OUTPUT -->
+    <div class="slide" id="slide-4">
+      <div class="slide-content-grid">
+        <div class="slide-text-section">
+          <span class="slide-number">04 / Salida Plana</span>
+          <h2 class="slide-title">Salida Cruda del Modelo</h2>
+          <p class="slide-lead-para">El modelo no ejecuta código de manera interna ni interactúa con tu hardware. Su única respuesta real es una <strong>cadena de texto continuo</strong>.</p>
+          <ul class="key-points-list">
+            <li>Genera tokens uno tras otro basándose en probabilidades secuenciales.</li>
+            <li>No existe el concepto de burbujas de chat o roles en la salida cruda.</li>
+            <li>La "inteligencia" inicial es puramente una simulación sintáctica bien entrenada.</li>
+          </ul>
+        </div>
+        <div class="raw-output-container">
+          <div class="raw-prompt">Entrada (Prompt): Explica RAG de forma simple.</div>
+          <div class="raw-response" id="typing-container-s4">
+            RAG (Generación Aumentada por Recuperación) es un método que conecta un modelo generativo con un motor de búsqueda externo para inyectar documentos de confianza en tiempo real de forma dinámica dentro de la ventana de contexto...<span class="typing-cursor"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. BASE VS CHAT -->
+    <div class="slide" id="slide-5">
+      <div class="slide-content-grid">
+        <div class="slide-text-section">
+          <span class="slide-number">05 / Alineación</span>
+          <h2 class="slide-title">De completador a asistente</h2>
+          <p class="slide-lead-para">Mediante el entrenamiento de instrucciones (Instruction Tuning) y optimizaciones de preferencia (RLHF), logramos que el modelo base se <strong>comporte como un colaborador estructurado</strong>.</p>
+          <ul class="key-points-list">
+            <li><strong>Modelo Base:</strong> Especializado en continuar patrones de texto plano.</li>
+            <li><strong>Modelo de Chat:</strong> Alíneado para procesar directivas e instrucciones explícitas.</li>
+          </ul>
+        </div>
+        <div class="comparison-grid">
+          <div class="comp-card">
+            <div class="comp-header base">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Modelo Base (Raw)
+            </div>
+            <div class="comp-body">
+              <span class="comp-pill">Autocompletar</span>
+              <p style="color:var(--text-muted);">Había una vez un desarrollador que quería construir un agente de IA y entonces...</p>
+            </div>
+          </div>
+          <div class="comp-card active">
+            <div class="comp-header chat">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Modelo de Chat (Alineado)
+            </div>
+            <div class="comp-body">
+              <span class="comp-pill" style="background-color:var(--primary-glow); color:var(--primary);">Instrucción Directa</span>
+              <p style="color:var(--text-main);"><span style="color:var(--primary); font-weight:700;">Usuario:</span> Hola, ¿puedes ayudarme?<br><span style="color:var(--accent-cyan); font-weight:700;">Asistente:</span> ¡Por supuesto! ¿Qué tarea deseas que ejecutemos hoy?</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. CHAT INTERFACE (SIN SCROLL & FULL HEIGHT) -->
+    <div class="slide" id="slide-6">
+      <div class="slide-content-grid">
+        <div class="slide-text-section">
+          <span class="slide-number">06 / Abstracción de Chat</span>
+          <h2 class="slide-title">La interfaz de chat</h2>
+          <p class="slide-lead-para">La conversación fluida es una interfaz construida por la aplicación externa. Debajo del capó, el historial completo se formatea como una estructura de datos JSON limpia.</p>
+          <ul class="key-points-list">
+            <li><strong>System:</strong> Define la personalidad y las reglas del asistente.</li>
+            <li><strong>User:</strong> Representa los comandos de entrada del usuario humano.</li>
+            <li><strong>Assistant:</strong> Respuestas previamente devueltas por el modelo.</li>
+          </ul>
+        </div>
+        <div class="chat-showcase">
+          <div class="mini-chat-ui">
+            <div class="chat-bubble assistant" style="background-color:rgba(168, 85, 247, 0.08); border-color: rgba(168, 85, 247, 0.2); max-width: 100%;">
+              <strong>System:</strong> Eres un asistente enfocado en resolver consultas de forma directa.
+            </div>
+            <div class="chat-bubble user">¿Qué es un JSON?</div>
+            <div class="chat-bubble assistant">Un formato ligero de intercambio de datos estructurados para computadoras.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. MULTI-TURN & CONTEXT WINDOW -->
+    <div class="slide" id="slide-7">
+      <div class="slide-content-grid">
+        <div class="slide-text-section">
+          <span class="slide-number">07 / Contexto Acumulado</span>
+          <h2 class="slide-title">Memoria Conversacional</h2>
+          <p class="slide-lead-para">El modelo no retiene memoria activa entre llamadas API separadas. La memoria se simula <strong>enviando toda la conversación de vuelta</strong> en cada interacción.</p>
+          <ul class="key-points-list">
+            <li>Cada turno de chat incrementa los tokens que enviamos al LLM.</li>
+            <li>El modelo re-procesa el hilo completo desde cero en cada ejecución.</li>
+            <li>La ventana de contexto actúa como el límite físico de almacenamiento del prompt.</li>
+          </ul>
+        </div>
+        <div class="stack-container">
+          <div class="stack-layer system">
+            <span>Instrucción del Sistema</span>
+            <span class="stack-badge">15 tokens</span>
+          </div>
+          <div class="stack-layer user">
+            <span>Turno 1: Mensaje del Usuario</span>
+            <span class="stack-badge">25 tokens</span>
+          </div>
+          <div class="stack-layer assistant">
+            <span>Turno 1: Respuesta del LLM</span>
+            <span class="stack-badge">45 tokens</span>
+          </div>
+          <div class="stack-layer user active">
+            <span>Turno 2: Nuevo Mensaje</span>
+            <span class="stack-badge">20 tokens</span>
+          </div>
+          <div class="stack-footer-flow">
+            <span>Contexto Total Enviado: <strong>105 tokens</strong></span>
+            <span>→</span>
+            <span style="color:var(--primary); font-weight:800;">LLM</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. PRIMER LIMITE IMPORTANTE -->
+    <div class="slide" id="slide-8">
+      <div class="slide-content-grid">
+        <div class="slide-text-section">
+          <span class="slide-number">08 / Limitaciones</span>
+          <h2 class="slide-title">El primer límite crítico</h2>
+          <p class="slide-lead-para">Un LLM por sí solo es una base estática cerrada. Sus predicciones provienen <strong>exclusivamente</strong> de dos fuentes fijas de información.</p>
+          <ul class="key-points-list">
+            <li><strong>Parámetros de entrenamiento:</strong> Congelados en la fecha de corte.</li>
+            <li><strong>Ventana de contexto:</strong> Espacio de lectura de tamaño finito.</li>
+          </ul>
+        </div>
+        <div class="limit-showcase">
+          <div class="limit-card danger">
+            <div class="limit-icon">✕</div>
+            <div class="limit-detail">
+              <h4>Sin acceso a datos dinámicos o internos</h4>
+              <p>El LLM no puede saber qué compraste hoy, ni consultar políticas internas actuales de tu empresa si no se las provees explícitamente.</p>
+            </div>
+          </div>
+          <div class="limit-card" style="background-color:rgba(6, 182, 212, 0.04); border-color: rgba(6, 182, 212, 0.15)">
+            <div class="limit-icon" style="color:var(--accent-cyan);">ℹ</div>
+            <div class="limit-detail">
+              <h4>La Solución</h4>
+              <p>Necesitamos construir una arquitectura que busque datos en tiempo real y los inyecte directamente en la ventana del prompt activo.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9. RAG WITH FLOTANT RELEVANCE SCORES & FULL FINAL RESPONSE (SLIDE 9) -->
+    <div class="slide" id="slide-9">
+      <div class="slide-content-grid">
+        <div class="slide-text-section">
+          <span class="slide-number">09 / Arquitectura de Datos</span>
+          <h2 class="slide-title">RAG: Inyección Externa</h2>
+          <p class="slide-lead-para">RAG (Generación Aumentada por Recuperación) no re-entrena al LLM. Busca fragmentos en bases de datos externas y los introduce dinámicamente en el prompt.</p>
+          <ul class="key-points-list">
+            <li><strong>Recuperación:</strong> Encuentra chunks de texto relevantes en la base vectorial.</li>
+            <li><strong>Aumentación:</strong> Modifica el prompt inyectando la información.</li>
+            <li><strong>Generación:</strong> El LLM responde basándose en la evidencia provista.</li>
+          </ul>
+        </div>
+        <div class="rag-vertical-flow">
+          <!-- Step 1: Pregunta -->
+          <div class="rag-flow-card">
+            <div class="rag-flow-header">
+              <span>Paso 1: Pregunta del Usuario</span>
+            </div>
+            <div class="rag-flow-content">
+              "¿Cuánto gasté el mes pasado en productos de comida?"
+            </div>
+          </div>
+          <!-- Step 2: Busqueda Vectorial con Scores fuera del card -->
+          <div class="rag-flow-card highlight">
+            <div class="rag-flow-header">
+              <span>Paso 2: Búsqueda Vectorial (Fragmentos recuperados)</span>
+            </div>
+            <div class="rag-flow-chunks-container">
+              <div class="rag-chunk-wrapper">
+                <span class="rag-chunk-score">Relevancia: 12%</span>
+                <div class="rag-chunk">Gastos en transporte: $50</div>
+              </div>
+              <div class="rag-chunk-wrapper active">
+                <span class="rag-chunk-score highlight">Relevancia: 95%</span>
+                <div class="rag-chunk">Gastos en comida: $120</div>
+              </div>
+              <div class="rag-chunk-wrapper">
+                <span class="rag-chunk-score">Relevancia: 28%</span>
+                <div class="rag-chunk">Gastos en servicios: $80</div>
+              </div>
+            </div>
+          </div>
+          <!-- Step 3: Prompt final + Respuesta inyectada al final -->
+          <div class="rag-flow-card">
+            <div class="rag-flow-header">
+              <span>Paso 3: Prompt Aumentado + Respuesta Generada</span>
+            </div>
+            <div class="rag-flow-content" style="font-size:1.05rem; font-family:'Fira Code', monospace; line-height: 1.5;">
+              "Pregunta: ¿Cuánto gasté en comida? Contexto: Gastos comida = $120.<br>
+              <span style="color: var(--accent-green); font-weight: 800;">[Respuesta LLM]:</span> Gastaste un total de $120 en comida el mes pasado."
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 10. RAG COMPARATIVE (SIZE-ADJUSTED CARDS) -->
+    <div class="slide" id="slide-10">
+      <div class="slide-content-grid">
+        <div class="slide-text-section">
+          <span class="slide-number">10 / Calidad de Respuesta</span>
+          <h2 class="slide-title">Cómo cambia la respuesta</h2>
+          <p class="slide-lead-para">Con RAG, el modelo pasa de adivinar o alucinar a responder con datos reales verificados directamente sobre tu documentación.</p>
+          <ul class="key-points-list">
+            <li><strong>Sin RAG:</strong> Respuestas genéricas, especulativas o desactualizadas.</li>
+            <li><strong>Con RAG:</strong> Precisión fundamentada en fuentes externas inyectadas.</li>
+          </ul>
+        </div>
+        <div class="rag-comp-split">
+          <div class="rag-comp-box">
+            <h4 style="color:var(--accent-red);">Sin RAG</h4>
+            <div class="rag-comp-text">
+              "No puedo acceder a tus transacciones en tiempo real. Asumo que el gasto promedio en comida suele rondar los $100..."
+            </div>
+          </div>
+          <div class="rag-comp-box with-rag">
+            <h4 style="color:var(--accent-green);">Con RAG</h4>
+            <div class="rag-comp-text" style="color:var(--text-main);">
+              "De acuerdo con tus <strong>registros de transacciones del mes pasado</strong>, gastaste un total de <strong>$120</strong> en comida."
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 11. SEGUNDO LIMITE IMPORTANTE -->
+    <div class="slide" id="slide-11">
+      <div class="slide-content-grid">
+        <div class="slide-text-section">
+          <span class="slide-number">11 / Limitaciones Avanzadas</span>
+          <h2 class="slide-title">El segundo límite crítico</h2>
+          <p class="slide-lead-para">El modelo ahora tiene acceso a información externa, pero se enfrenta a una barrera de acción: <strong>sigue produciendo únicamente texto</strong>.</p>
+          <ul class="key-points-list">
+            <li>Puede sugerir y redactar una transferencia bancaria perfecta.</li>
+            <li>Puede escribir el código exacto para enviar un correo de soporte.</li>
+            <li>But **carece de ejecución autónoma**: el LLM por sí solo no puede realizar clics ni conectarse a protocolos externos.</li>
+          </ul>
+        </div>
+        <div class="limit-showcase">
+          <div class="limit-card danger">
+            <div class="limit-icon">✕</div>
+            <div class="limit-detail">
+              <h4>El modelo aconseja, pero no ejecuta</h4>
+              <p>Recomendar una acción en texto no es lo mismo que ejecutarla. Necesitamos un traductor de intenciones que las máquinas puedan procesar.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 12. SALIDAS ESTRUCTURADAS & TOOL CALLING -->
+    <div class="slide" id="slide-12">
+      <div class="slide-content-grid">
+        <div class="slide-text-section">
+          <span class="slide-number">12 / Control de Output</span>
+          <h2 class="slide-title">Structured Output & Tools</h2>
+          <p class="slide-lead-para">Alineamos al modelo para emitir <strong>esquemas de datos JSON validados</strong> en vez de prosa natural, permitiendo que otros sistemas interpreten su intención como un comando formal.</p>
+          <ul class="key-points-list">
+            <li>El modelo no corre la función directamente.</li>
+            <li>El modelo <strong>emite una solicitud estructurada</strong> con argumentos explícitos para que el orquestador externo la ejecute.</li>
+          </ul>
+        </div>
+        <div class="tool-request-container">
+          <div class="tool-flow-row">
+            <div class="tool-flow-num">1</div>
+            <div class="tool-flow-body">
+              <div class="tool-flow-label">Entrada del Usuario (Natural)</div>
+              <div class="tool-flow-val">"Transfiere $50 a Juan"</div>
+            </div>
+          </div>
+          <div class="tool-flow-row active">
+            <div class="tool-flow-num">2</div>
+            <div class="tool-flow-body">
+              <div class="tool-flow-label">Solicitud Estructurada del LLM (JSON)</div>
+              <div class="tool-flow-val" style="color:var(--accent-cyan); font-family: 'Fira Code', monospace; font-size:1.05rem;">
+                {"function": "send_money", "args": {"to": "Juan", "amount": 50}}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 13. SYSTEM LAYER / ORCHESTRATOR FLOW -->
+    <div class="slide" id="slide-13">
+      <div class="slide-text-section" style="text-align: center; margin-bottom: 2rem;">
+        <span class="slide-number">13 / El Orquestador</span>
+        <h2 class="slide-title" style="margin-bottom: 0.5rem;">La pieza invisible del sistema</h2>
+        <p class="slide-lead-para">El orquestador es el software tradicional que lee los comandos estructurados del modelo y los ejecuta en el mundo real.</p>
+      </div>
+      
+      <div class="sys-cards-flow">
+        <!-- Step 1 -->
+        <div class="sys-step-card active">
+          <div class="sys-step-icon">🔍</div>
+          <div class="sys-step-info">
+            <h4>1. Parser y Validador</h4>
+            <p>Extrae el bloque JSON del output del modelo y verifica que cumpla con los esquemas de argumentos exigidos.</p>
+          </div>
+          <div class="sys-flow-arrow">↓</div>
+        </div>
+        
+        <!-- Step 2 -->
+        <div class="sys-step-card">
+          <div class="sys-step-icon">⚡</div>
+          <div class="sys-step-info">
+            <h4>2. Ejecutor de Herramientas</h4>
+            <p>Correr la lógica (APIs, DBs, Código) utilizando las credenciales seguras de la aplicación, nunca directamente desde el LLM.</p>
+          </div>
+          <div class="sys-flow-arrow">↓</div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="sys-step-card">
+          <div class="sys-step-icon">🔄</div>
+          <div class="sys-step-info">
+            <h4>3. Actualizador de Contexto</h4>
+            <p>Inyecta el resultado de la ejecución de vuelta en el prompt como una observación para que el LLM decida el siguiente paso.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 14. EL CICLO DE ACCION: MODEL -> TOOL -> OBSERVE -->
+    <div class="slide" id="slide-14">
+      <div class="slide-content-grid">
+        <div class="slide-text-section">
+          <span class="slide-number">14 / Bucles Agénticos</span>
+          <h2 class="slide-title">El Ciclo de Acción</h2>
+          <p class="slide-lead-para">El verdadero comportamiento agéntico surge cuando permitimos al sistema iterar en un bucle continuo de toma de decisiones y ejecución.</p>
+          <ul class="key-points-list">
+            <li><strong>Observar:</strong> El sistema evalúa el estado del contexto actual.</li>
+            <li><strong>Decidir:</strong> El modelo determina si necesita usar una herramienta.</li>
+            <li><strong>Actuar:</strong> El orquestador ejecuta la acción y devuelve la observación.</li>
+          </ul>
+        </div>
+        <div class="loop-visual">
+          <div class="loop-circle">
+            <div class="loop-node n1">Observar</div>
+            <div class="loop-node n2">Decidir</div>
+            <div class="loop-node n3">Actuar</div>
+            <div class="loop-node n4">Evaluar</div>
+          </div>
+          <div class="loop-center">LOOP</div>
+          <div class="loop-steps-log">
+            <div class="loop-step-badge">1. Buscar Pedido</div>
+            <div class="loop-step-badge">2. Validar Estado</div>
+            <div class="loop-step-badge active">3. Aplicar Reembolso</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 15. QUE ES UN HARNESS AGENTICO -->
+    <div class="slide" id="slide-15">
+      <div class="harness-super-box">
+        <div class="harness-super-header">
+          <h3>El Harness Agéntico</h3>
+          <span class="harness-badge" style="background-color:var(--primary); color:#ffffff; padding:0.4rem 1rem; border-radius:8px; font-weight:700;">Seguridad y Control</span>
+        </div>
+        
+        <p class="slide-lead-para" style="margin-bottom: 0.5rem; font-size:1.25rem;">
+          Un <strong>Harness Agéntico</strong> es el entorno de ejecución controlado (sandboxed) y estructurado que envuelve al modelo de lenguaje. Es la infraestructura de software encargada de transformar las intenciones en texto del LLM en acciones seguras, validadas y auditables.
+        </p>
+
+        <div class="harness-expanded-grid">
+          <div class="harness-exp-card">
+            <h5>Context (Contexto)</h5>
+            <p>Construye y actualiza la ventana dinámica de tokens inyectando historial y datos en tiempo real.</p>
+          </div>
+          <div class="harness-exp-card">
+            <h5>Tools (Herramientas)</h5>
+            <p>Catálogo y esquemas de funciones que el modelo tiene permitido solicitar bajo validación estricta.</p>
+          </div>
+          <div class="harness-exp-card">
+            <h5>State (Estado)</h5>
+            <p>Monitorea y almacena las variables operativas y de sesión a lo largo de ciclos de ejecución complejos.</p>
+          </div>
+          <div class="harness-exp-card">
+            <h5>Memory (Memoria)</h5>
+            <p>Persistencia semántica externa para recordar datos históricos más allá de la ventana de chat.</p>
+          </div>
+          <div class="harness-exp-card">
+            <h5>Validation (Validación)</h5>
+            <p>Filtra y sanea todos los outputs JSON del modelo antes de ejecutar cualquier acción en producción.</p>
+          </div>
+          <div class="harness-exp-card">
+            <h5>Execution (Ejecución)</h5>
+            <p>Entorno aislado (Sandbox) donde se ejecutan las llamadas API y tareas lógicas de forma segura.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 16. ANATOMIA DEL HARNESS -->
+    <div class="slide" id="slide-16">
+      <div class="slide-number">16 / Anatomía del Flujo</div>
+      <h2 class="slide-title" style="margin-bottom:1.5rem;">Funcionamiento del Harness en Acción</h2>
+      
+      <div class="harness-anatomy-grid">
+        <!-- Left explanation block -->
+        <div class="anatomy-left-explanation">
+          <div class="anatomy-explain-card">
+            <h5>1. Entrada & Configuración</h5>
+            <p>El harness configura el System Prompt limitando las capacidades y estructura la lista de herramientas válidas con JSON Schema.</p>
+          </div>
+          <div class="anatomy-explain-card">
+            <h5>2. Prompt de Usuario</h5>
+            <p>El mensaje inicial entra al flujo buscando y sumando contexto dinámico mediante RAG.</p>
+          </div>
+          <div class="anatomy-explain-card">
+            <h5>3. Ejecución Aislada</h5>
+            <p>El orquestador intercepta la llamada, valida argumentos, ejecuta la acción real y formatea el resultado final.</p>
+          </div>
+        </div>
+
+        <!-- Right code flow simulator -->
+        <div class="anatomy-right-flow-terminal">
+          <!-- Step 1 -->
+          <div class="anatomy-flow-step">
+            <div class="anatomy-flow-title">System Prompt & Tools</div>
+            <div class="anatomy-flow-content">
+              "Eres un agente financiero. Tienes acceso a la función: <code>transferir_fondos(destino, monto)</code>"
+            </div>
+          </div>
+          <!-- Step 2 -->
+          <div class="anatomy-flow-step">
+            <div class="anatomy-flow-title">User Prompt</div>
+            <div class="anatomy-flow-content">
+              "Envía 150 dólares de mi cuenta de ahorros a la cuenta de María."
+            </div>
+          </div>
+          <!-- Step 3 -->
+          <div class="anatomy-flow-step exec">
+            <div class="anatomy-flow-title">Harness Execution (Acción real)</div>
+            <div class="anatomy-flow-content" style="color:var(--accent-green);">
+              [VALIDADO] Llamando API Bancaria...<br>
+              Resultado: <code>{"status": "success", "tx_id": 89432}</code>
+            </div>
+          </div>
+          <!-- Step 4 -->
+          <div class="anatomy-flow-step">
+            <div class="anatomy-flow-title">Final Response</div>
+            <div class="anatomy-flow-content">
+              "He completado la transferencia de $150 a María con ID de transacción 89432."
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 17. PROBLEMAS REALES Y BUENAS PRACTICAS -->
+    <div class="slide" id="slide-17">
+      <div class="slide-content-grid">
+        <div class="slide-text-section">
+          <span class="slide-number">17 / Resiliencia en Producción</span>
+          <h2 class="slide-title" style="margin-bottom:1rem;">Retos y Buenas Prácticas</h2>
+          <p class="slide-lead-para" style="margin-bottom:1rem;">Desplegar sistemas agénticos seguros requiere asumir que los modelos cometerán errores de forma continua.</p>
+          <ul class="key-points-list" style="gap:0.75rem;">
+            <li>Los LLMs suelen alucinar herramientas que no existen o argumentos incorrectos.</li>
+            <li>Es crítico limitar el consumo de tokens y llamadas consecutivas.</li>
+            <li>La trazabilidad completa y auditable es indispensable.</li>
+          </ul>
+        </div>
+        <div class="practices-split">
+          <div class="practice-column failures">
+            <div class="practice-col-header" style="color:var(--accent-red)">Modos de Fallo</div>
+            <ul class="practice-list">
+              <li>Bucles infinitos de llamadas recursivas</li>
+              <li>Alucinación de herramientas no configuradas</li>
+              <li>Argumentos Json con sintaxis rota o inválida</li>
+            </ul>
+          </div>
+          <div class="practice-column controls">
+            <div class="practice-col-header" style="color:var(--accent-green)">Estrategias de Control</div>
+            <ul class="practice-list">
+              <li>Límites estrictos de pasos de ejecución (Max Steps: 5)</li>
+              <li>Validación estricta de esquemas JSON Schema</li>
+              <li>Aislamiento en Sandbox para código generado</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 18. MAPA COMPLETO DEL CAMINO (RECAP) -->
+    <div class="slide" id="slide-18">
+      <div class="slide-text-section" style="text-align: center; margin-bottom: 3rem;">
+        <span class="slide-number">18 / Recapitulación</span>
+        <h2 class="slide-title" style="margin-bottom: 0.5rem;">El Mapa Completo del Camino</h2>
+        <p class="slide-lead-para">Toda la evolución conectada: de simples predictores de caracteres a motores integrados de toma de decisiones.</p>
+      </div>
+      <div class="timeline-container">
+        <div class="timeline-track">
+          <div class="timeline-node active">1<span class="timeline-label">Next Token</span></div>
+          <div class="timeline-node">2<span class="timeline-label">Alineación Chat</span></div>
+          <div class="timeline-node">3<span class="timeline-label">Contexto</span></div>
+          <div class="timeline-node">4<span class="timeline-label">RAG</span></div>
+          <div class="timeline-node">5<span class="timeline-label">JSON Output</span></div>
+          <div class="timeline-node">6<span class="timeline-label">Action Loop</span></div>
+          <div class="timeline-node">7<span class="timeline-label">Harness</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 19. CIERRE -->
+    <div class="slide slide-cierre" id="slide-19">
+      <span class="slide-number">19 / Conclusión</span>
+      <h2 class="cierre-title">La inteligencia no reside únicamente en el modelo de lenguaje...</h2>
+      <p class="cierre-sub">Reside en la ingeniería del sistema estructurado a su alrededor.</p>
+    </div>
+
+  </main>
+
+  <!-- Footer with Navigation & Centralized Progress -->
+  <footer>
+    <div class="slide-controls">
+      <button class="btn-control" id="btnPrev" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Anterior
+      </button>
+    </div>
+
+    <div class="footer-center">
+      <div class="slide-counter" id="slideCounter">1 / 19</div>
+      <div class="nav-progress-dots" id="progressDots"></div>
+    </div>
+
+    <div class="slide-controls">
+      <button class="btn-control" id="btnNext">
+        Siguiente
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+  </footer>
+
+  <script>
+    const totalSlides = 19;
+    let currentSlide = 1;
+
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+    const slideCounter = document.getElementById('slideCounter');
+    const progressDotsContainer = document.getElementById('progressDots');
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const colorToggleBtn = document.getElementById('colorToggleBtn');
+
+    // Create progress dots
+    for (let i = 1; i <= totalSlides; i++) {
+      const dot = document.createElement('div');
+      dot.classList.add('progress-dot');
+      if (i === 1) dot.classList.add('active');
+      dot.id = `dot-${i}`;
+      progressDotsContainer.appendChild(dot);
+    }
+
+    // Toggle Light/Dark Mode
+    themeToggleBtn.addEventListener('click', () => {
+      document.body.classList.toggle('light-mode');
+      if (document.body.classList.contains('light-mode')) {
+        themeToggleBtn.innerHTML = '☀️';
+      } else {
+        themeToggleBtn.innerHTML = '🌙';
+      }
+    });
+
+    // Color Theme 3-State Toggle: Auto -> Indigo -> Anthropic
+    let colorMode = 'auto'; // 'auto', 'indigo', 'anthropic'
+    let colorAnimFrame = null;
+
+    const colorThemes = {
+      dark: {
+        indigo: {
+          primary: [99, 102, 241],
+          primaryGlow: [99, 102, 241, 0.10],
+          accentCyan: [6, 182, 212],
+          accentCyanGlow: [6, 182, 212, 0.10],
+          accentPurple: [168, 85, 247]
+        },
+        anthropic: {
+          primary: [217, 119, 6],
+          primaryGlow: [217, 119, 6, 0.10],
+          accentCyan: [225, 29, 72],
+          accentCyanGlow: [225, 29, 72, 0.10],
+          accentPurple: [194, 65, 12]
+        }
+      },
+      light: {
+        indigo: {
+          primary: [99, 102, 241],
+          primaryGlow: [79, 70, 229, 0.08],
+          accentCyan: [6, 182, 212],
+          accentCyanGlow: [8, 145, 178, 0.08],
+          accentPurple: [168, 85, 247]
+        },
+        anthropic: {
+          primary: [180, 83, 9],
+          primaryGlow: [180, 83, 9, 0.08],
+          accentCyan: [190, 18, 60],
+          accentCyanGlow: [190, 18, 60, 0.08],
+          accentPurple: [154, 52, 18]
+        }
+      }
+    };
+
+    function lerp(a, b, t) {
+      return a + (b - a) * t;
+    }
+
+    function lerpColor(c1, c2, t) {
+      const r = Math.round(lerp(c1[0], c2[0], t));
+      const g = Math.round(lerp(c1[1], c2[1], t));
+      const b = Math.round(lerp(c1[2], c2[2], t));
+      if (c1.length === 3) {
+        return `rgb(${r}, ${g}, ${b})`;
+      }
+      const alpha = lerp(c1[3], c2[3], t);
+      return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(3)})`;
+    }
+
+    function setCSSVariables(t, themeSet) {
+      const root = document.documentElement;
+      const from = themeSet.indigo;
+      const to = themeSet.anthropic;
+      root.style.setProperty('--primary', lerpColor(from.primary, to.primary, t));
+      root.style.setProperty('--primary-glow', lerpColor(from.primaryGlow, to.primaryGlow, t));
+      root.style.setProperty('--accent-cyan', lerpColor(from.accentCyan, to.accentCyan, t));
+      root.style.setProperty('--accent-cyan-glow', lerpColor(from.accentCyanGlow, to.accentCyanGlow, t));
+      root.style.setProperty('--accent-purple', lerpColor(from.accentPurple, to.accentPurple, t));
+    }
+
+    function clearCSSVariables() {
+      const root = document.documentElement;
+      root.style.removeProperty('--primary');
+      root.style.removeProperty('--primary-glow');
+      root.style.removeProperty('--accent-cyan');
+      root.style.removeProperty('--accent-cyan-glow');
+      root.style.removeProperty('--accent-purple');
+    }
+
+    function animateColors() {
+      const isLight = document.body.classList.contains('light-mode');
+      const themeSet = isLight ? colorThemes.light : colorThemes.dark;
+      // 30 seconds fade one way, 30 seconds back = 60s full cycle
+      const raw = Math.sin((Date.now() / 30000) * Math.PI);
+      const t = (raw + 1) / 2; // map -1..1 to 0..1
+      setCSSVariables(t, themeSet);
+      colorAnimFrame = requestAnimationFrame(animateColors);
+    }
+
+    function updateColorButton() {
+      if (colorMode === 'auto') {
+        colorToggleBtn.innerHTML = '🎨';
+        colorToggleBtn.title = 'Color: Auto (transición suave)';
+      } else if (colorMode === 'indigo') {
+        colorToggleBtn.innerHTML = '🔵';
+        colorToggleBtn.title = 'Color: Indigo';
+      } else if (colorMode === 'anthropic') {
+        colorToggleBtn.innerHTML = '🟠';
+        colorToggleBtn.title = 'Color: Anthropic';
+      }
+    }
+
+    function applyColorMode() {
+      if (colorAnimFrame) {
+        cancelAnimationFrame(colorAnimFrame);
+        colorAnimFrame = null;
+      }
+
+      if (colorMode === 'auto') {
+        document.body.classList.remove('anthropic-theme');
+        animateColors();
+      } else if (colorMode === 'indigo') {
+        document.body.classList.remove('anthropic-theme');
+        clearCSSVariables();
+      } else if (colorMode === 'anthropic') {
+        document.body.classList.add('anthropic-theme');
+        clearCSSVariables();
+      }
+      updateColorButton();
+    }
+
+    colorToggleBtn.addEventListener('click', () => {
+      if (colorMode === 'auto') {
+        colorMode = 'indigo';
+      } else if (colorMode === 'indigo') {
+        colorMode = 'anthropic';
+      } else {
+        colorMode = 'auto';
+      }
+      applyColorMode();
+    });
+
+    // Initialize color mode
+    applyColorMode();
+
+    function updatePresentationState() {
+      // Manage active slide class
+      document.querySelectorAll('.slide').forEach(slide => {
+        slide.classList.remove('active');
+      });
+      document.getElementById(`slide-${currentSlide}`).classList.add('active');
+
+      // Update progress dots status
+      for (let i = 1; i <= totalSlides; i++) {
+        const dot = document.getElementById(`dot-${i}`);
+        dot.classList.remove('active', 'completed');
+        if (i === currentSlide) {
+          dot.classList.add('active');
+        } else if (i < currentSlide) {
+          dot.classList.add('completed');
+        }
+      }
+
+      // Update slide counter text
+      slideCounter.textContent = `${currentSlide} / ${totalSlides}`;
+
+      // Enable/Disable navigation buttons
+      btnPrev.disabled = currentSlide === 1;
+      btnNext.disabled = currentSlide === totalSlides;
+
+      // Handle typewriter effect inside slide 4
+      handleSlideAnimations();
+    }
+
+    let s4TypingInterval = null;
+    function handleSlideAnimations() {
+      const typingContainer = document.getElementById('typing-container-s4');
+      if (currentSlide === 4) {
+        const fullText = "RAG (Generación Aumentada por Recuperación) es un método que conecta un modelo generativo con un motor de búsqueda externo para inyectar documentos de confianza en tiempo real de forma dinámica dentro de la ventana de contexto.";
+        typingContainer.innerHTML = '';
+        let index = 0;
+        
+        clearInterval(s4TypingInterval);
+        s4TypingInterval = setInterval(() => {
+          if (index < fullText.length) {
+            typingContainer.innerHTML = fullText.slice(0, index + 1) + '<span class="typing-cursor"></span>';
+            index++;
+          } else {
+            clearInterval(s4TypingInterval);
+          }
+        }, 25);
+      } else {
+        clearInterval(s4TypingInterval);
+      }
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        if (document.startViewTransition) {
+          document.startViewTransition(() => updatePresentationState());
+        } else {
+          updatePresentationState();
+        }
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        if (document.startViewTransition) {
+          document.startViewTransition(() => updatePresentationState());
+        } else {
+          updatePresentationState();
+        }
+      }
+    }
+
+    btnNext.addEventListener('click', nextSlide);
+    btnPrev.addEventListener('click', prevSlide);
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'Space') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        prevSlide();
+      }
+    });
+
+    // Make timeline nodes clickable on Slide 18
+    document.querySelectorAll('.timeline-node').forEach((node, idx) => {
+      node.addEventListener('click', () => {
+        document.querySelectorAll('.timeline-node').forEach((n, i) => {
+          if (i <= idx) {
+            n.classList.add('active');
+          } else {
+            n.classList.remove('active');
+          }
+        });
+      });
+    });
+
+    // Initialize presentation
+    updatePresentationState();
+  </script>
+</body>
+</html>
