@@ -5,3 +5,4 @@ __pycache__/
 .gemini/
 *.log
 tarea.txt
+CNN_demo_gradio/
